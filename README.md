@@ -1,5 +1,16 @@
 The purpose of this repository is to have a central location to capture all of the functional FPGA source code into a concise library based on type of function. This will be my primary FPGA development repository from now on and all other repos will soon be merged into this.
 
+SRIO AXIS Packet Generator
+===
+This module generates random deterministic data payloads for the 
+Xilinx SRIO Endpoint. This module utilizes the HELLO Header format
+as specified in the Xilinx PG document:
+
+http://www.xilinx.com/support/documentation/ip_documentation/srio_gen2/v2_0/pg007_srio_gen2.pdf
+
+This module utilizes SystemVerilog constructs and was simulated with
+QuestaSim 10.2.
+
 Merge Sort
 ===
 This design block provides the ability to sort up to 16 binary numbers. The block will output the original numbers, though sorted from lowest (position 0) to highest (position n-1).

@@ -165,12 +165,13 @@ Unsigned Binary Multiplication
 This methodology of producing a result by multiplying two unsigned n-bit integers (a, b) together where the clock cycle delay is n-1 clocks. Thus for two 64-bit values the delay is 63 clock cycles, although the result is a 128-bit value. Depending on the difficulty of meeting timing in the below assign combinatorial statements, these could be registered as well adding 1-2 clock cycle latency which could be made up for with quite high clock speeds. While this algorithm isn't very complex it is quite slow for a design in hardware.
 
 ```
-assign stage_0 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[0]}}})<<0;
-assign stage_1 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[1]}}})<<1;
-assign stage_2 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[2]}}})<<2;
+// Combinatorial mashing of the two input values, packing to double the bit space
+assign stage_0 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[0]}}})<<0;
+assign stage_1 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[1]}}})<<1;
+assign stage_2 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[2]}}})<<2;
 ....
 // Only requires n/2 operations
-assign stage_n-1 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[n]}}})<<(n-1);
+assign stage_n-1 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[n]}}})<<(n-1);
 
 // Now sequentially add the stages
 always@(posedge clk) begin

@@ -166,12 +166,12 @@ This methodology of producing a result by multiplying two unsigned n-bit integer
 
 ```
 // Combinatorial mashing of the two input values, packing to double the bit space
-assign stage_0 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[0]}}})<<0;
-assign stage_1 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[1]}}})<<1;
-assign stage_2 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[2]}}})<<2;
+assign stage_0 = ( { {n{1'b0}}, (b[(n-1):0] & {n{a[0]}}) } ) << 0;
+assign stage_1 = ( { {n{1'b0}}, (b[(n-1):0] & {n{a[1]}}) } ) << 1;
+assign stage_2 = ( { {n{1'b0}}, (b[(n-1):0] & {n{a[2]}}) } ) << 2;
 ....
 // Only requires n/2 operations
-assign stage_n-1 = ({{n{1'b0}}, b[(n-1):0]} & {{n{1'b0}}, {n{a[n]}}})<<(n-1);
+assign stage_n-1 = ( { {n{1'b0}}, (b[(n-1):0] & {n{a[n]}}) } ) << (n-1);
 
 // Now sequentially add the stages
 always@(posedge clk) begin

@@ -155,3 +155,48 @@ Cell usage:
  * IBUFG          1 use
  * OBUF           593 uses
  * BUFG           1 use
+
+Multiplication
+===
+While addition and subtraction functions are fairly straight forward algorithms in an FPGA, multiplication is quite complicated and very resource intensive. This document will discuss several multiplication techniques that will be used in the multiplication block.
+
+Unsigned Binary Multiplication
+---
+This methodology of producing a result by multiplying two unsigned n-bit integers (a, b) together where the clock cycle delay is n-1 clocks. Thus for two 64-bit values the delay is 63 clock cycles, although the result is a 128-bit value. Depending on the difficulty of meeting timing in the below assign combinatorial statements, these could be registered as well adding 1-2 clock cycle latency which could be made up for with quite high clock speeds. While this algorithm isn't very complex it is quite slow for a design in hardware.
+
+```
+assign stage_0 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[0]}}})<<0;
+assign stage_1 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[1]}}})<<1;
+assign stage_2 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[2]}}})<<2;
+....
+// Only requires n/2 operations
+assign stage_n-1 = ({{n{1'b0}}, b[(n-1):0]} && {{n{1'b0}}, {n{a[n]}}})<<(n-1);
+
+// Now sequentially add the stages
+always@(posedge clk) begin
+  case(state)
+    IDLE : begin
+      if(go) begin
+        state <= add0;
+      end
+    end
+    add0 : begin
+      out0 <= stage_0 + stage1;
+      state <= add1;
+    end
+    add1 : begin
+      out1 <= stage_1 + out0;
+      state <= add2;
+    end
+    add2 : begin
+      out2 <= stage_2 + out1;
+      state <= add3;
+    end
+    ...
+    addn-1 : begin
+      outn-1 <= stage_n-1 + outn-2;
+      state <= IDLE;
+    end
+  endcase
+end
+```

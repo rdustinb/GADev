@@ -501,7 +501,7 @@ module merge_sort #(
           step7 <= 0;
           positions_y <= 0;
           error_y <= 1;
-          state <= IDLE;
+          sort_fsm <= IDLE;
         end
       endcase
     end

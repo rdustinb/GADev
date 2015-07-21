@@ -20,19 +20,27 @@ module insert_sort #(
   States sort_fsm;
 
   // Signals
-  logic [$clog2(INPUTVALS)-1:0] total_sorted;
-  logic [$clog2(INPUTVALS)-1:0] compare_position;
-  logic [$clog2(INPUTVALS)-1:0] insert_point;
+  logic [$clog2(INPUTVALS):0] total_sorted;
+  logic [$clog2(INPUTVALS):0] compare_position;
+  logic [$clog2(INPUTVALS):0] insert_point;
   logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] working_set;
   logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] sorted_y;
-  logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] positions_y;
+  logic [(INPUTVALS-1):0][$clog2(INPUTVALS):0] positions_y;
   logic sortdone_y;
   logic error_y;
 
+  // Output Assignments
+  assign sortdone = sortdone_y;
+  assign error = error_y;
+  assign sorted = sorted_y;
+  assign sorted_positions = positions_y;
+
+  // Core Logic
   always@(posedge clk) begin
     if(reset == RSTPOL) begin
       working_set <= 0;
       sortdone_y <= 0;
+      positions_y <= 0;
       error_y <= 0;
       sort_fsm <= IDLE;
     end
@@ -48,10 +56,8 @@ module insert_sort #(
             working_set <= needs_sorting;
             // Push first value into position 0
             sorted_y[0] <= needs_sorting[0];
-            // Generate the initial position array
-            for(int i =0; i<INPUTVALS; i++) begin
-              positions_y[i] <= i;
-            end
+            // Store position
+            positions_y[0] <= 0;
             // Current Number Sorted is incremented as we have one value in the
             // sorted array
             total_sorted <= 1;
@@ -68,8 +74,16 @@ module insert_sort #(
           end
           // Find the Insertion Point
           else begin
+            // Corner case where this is the smallest value
+            if(working_set[total_sorted] <= sorted_y[0]) begin
+              insert_point <= 0;
+              compare_position <= compare_position + 1;
+              sort_fsm <= INSERT;
+            end
             // If this iteration found the insertion point, flag it
-            if((working_set[total_sorted] >= sorted_y[compare_position]) && (working_set[total_sorted] <= sorted_y[compare_position+1])) begin
+            else if((working_set[total_sorted] >= sorted_y[compare_position]) && (working_set[total_sorted] <= sorted_y[compare_position+1])) begin
+              insert_point <= compare_position + 1;
+              compare_position <= compare_position + 1;
               sort_fsm <= INSERT;
             end
             // Otherwise Increment the compare point
@@ -80,10 +94,13 @@ module insert_sort #(
         end
         INSERT      : begin
           // Insert the new value
-          sorted_y[compare_position] <= working_set[total_sorted];
+          sorted_y[insert_point] <= working_set[total_sorted];
+          // insert the new position
+          positions_y[insert_point] <= total_sorted;
           // Everything Above this position gets shifted up
-          for(int i=(compare_position+1); i<INPUTVALS; i++) begin
-            sorted_y[i] <= sorted_y[(i-1)];
+          for(int i=(insert_point); i<INPUTVALS; i++) begin
+            sorted_y[(i+1)] <= sorted_y[i];
+            positions_y[(i+1)] <= positions_y[i];
           end
           // Clear the Compare Positions pointer
           compare_position <= 0;

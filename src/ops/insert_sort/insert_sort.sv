@@ -20,25 +20,21 @@ module insert_sort #(
   States sort_fsm;
 
   // Signals
-  logic sortdone_y;
+  logic [$clog2(INPUTVALS)-1:0] total_sorted;
+  logic [$clog2(INPUTVALS)-1:0] compare_position;
+  logic [$clog2(INPUTVALS)-1:0] insert_point;
   logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] working_set;
   logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] sorted_y;
-  logic [(INPUTVALS-1):0][$clog2(INPUTVALS):0] positions_y;
+  logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] positions_y;
+  logic sortdone_y;
   logic error_y;
 
-  // Output Assignments
-  assign sortdone = sortdone_y;
-  assign sorted = working_set;
-  assign sorted_positions = positions_y;
-  assign error = error_y;
-
-    always@(posedge clk) begin
+  always@(posedge clk) begin
     if(reset == RSTPOL) begin
       working_set <= 0;
       sortdone_y <= 0;
-      positions_y <= 0;
-      sort_fsm <= IDLE;
       error_y <= 0;
+      sort_fsm <= IDLE;
     end
     else begin
       // Defaults
@@ -84,9 +80,11 @@ module insert_sort #(
         end
         INSERT      : begin
           // Insert the new value
-          sortdone_y[compare_position] <= working_set[total_sorted];
+          sorted_y[compare_position] <= working_set[total_sorted];
           // Everything Above this position gets shifted up
-          sorted_y[(INPUTVALS-1):(compare_position+1)] <= sorted_y[(INPUTVALS-2):(compare_position)];
+          for(int i=(compare_position+1); i<INPUTVALS; i++) begin
+            sorted_y[i] <= sorted_y[(i-1)];
+          end
           // Clear the Compare Positions pointer
           compare_position <= 0;
           // All Sorted
@@ -110,6 +108,9 @@ module insert_sort #(
           positions_y <= 0;
           error_y <= 1;
           sort_fsm <= IDLE;
-        end      endcase
+        end
+      endcase
+    end
+  end
 
 endmodule

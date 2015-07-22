@@ -16,13 +16,12 @@ module insert_sort #(
   // Control Parameters
 
   // Enumerations
-  typedef enum logic[3:0] {IDLE,COMPARE,INSERT} States;
+  typedef enum logic[2:0] {IDLE,SHIFT,COMPARE} States;
   States sort_fsm;
 
   // Signals
-  logic [$clog2(INPUTVALS):0] total_sorted;
-  logic [$clog2(INPUTVALS):0] compare_position;
-  logic [$clog2(INPUTVALS):0] insert_point;
+  logic [$clog2(INPUTVALS):0] current_sort;
+  logic [$clog2(INPUTVALS):0] current_position;
   logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] working_set;
   logic [(INPUTVALS-1):0][(INPUTBITWIDTHS-1):0] sorted_y;
   logic [(INPUTVALS-1):0][$clog2(INPUTVALS):0] positions_y;
@@ -40,7 +39,10 @@ module insert_sort #(
     if(reset == RSTPOL) begin
       working_set <= 0;
       sortdone_y <= 0;
-      positions_y <= 0;
+      // Generate the Position Array
+      for(int i=0; i<INPUTVALS; i++) begin
+        positions_y[i] <= i;
+      end
       error_y <= 0;
       sort_fsm <= IDLE;
     end
@@ -50,79 +52,104 @@ module insert_sort #(
       error_y <= 0;
       // FSM
       case(sort_fsm)
-        IDLE        : begin
+        IDLE      : begin
           if(sortstart == 1'b1) begin
             // Grab all working data, store internally
             working_set <= needs_sorting;
-            // Push first value into position 0
-            sorted_y[0] <= needs_sorting[0];
             // Store position
             positions_y[0] <= 0;
-            // Current Number Sorted is incremented as we have one value in the
-            // sorted array
-            total_sorted <= 1;
-            compare_position <= 0;
-            // Compare State
+            // Which Element are we Sorting?
+            current_sort <= 1;
+            // Where is the current values position?
+            current_position <= 1;
+            // Clear the output registered value
+            sorted_y <= 0;
+            // Compare First State
             sort_fsm <= COMPARE;
           end
         end
-        COMPARE     : begin
-          // If this value is larger than all others in the sorted list
-          if(compare_position == total_sorted) begin
-            insert_point <= total_sorted;
-            sort_fsm <= INSERT;
-          end
-          // Find the Insertion Point
-          else begin
-            // Corner case where this is the smallest value
-            if(working_set[total_sorted] <= sorted_y[0]) begin
-              insert_point <= 0;
-              compare_position <= compare_position + 1;
-              sort_fsm <= INSERT;
-            end
-            // If this iteration found the insertion point, flag it
-            else if((working_set[total_sorted] >= sorted_y[compare_position]) && (working_set[total_sorted] <= sorted_y[compare_position+1])) begin
-              insert_point <= compare_position + 1;
-              compare_position <= compare_position + 1;
-              sort_fsm <= INSERT;
-            end
-            // Otherwise Increment the compare point
-            else begin
-              compare_position <= compare_position + 1;
-            end
-          end
+        /********************************************************************
+          This Algorithm Works on one value at a time, starting from the
+          left-most element, shifting it as needed to the left until the
+          original list of values is sorted from lowest (on the left) to the
+          highest (on the right).
+          In this case the left-most position is array element 0.
+        ********************************************************************/
+        SHIFT     : begin
+          //-----------------------------------------------
+          // Shift the current value down
+          working_set[current_position-1] <= working_set[current_position];
+          // Shift the current position value down
+          positions_y[current_position-1] <= positions_y[current_position];
+
+          //-----------------------------------------------
+          // Shift the lower value up
+          working_set[current_position] <= working_set[current_position-1];
+          // Shift the current position value down
+          positions_y[current_position] <= positions_y[current_position-1];
+
+          //-----------------------------------------------
+          // Change the current position pointer
+          current_position <= current_position - 1;
+
+          //-----------------------------------------------
+          // Now compare
+          sort_fsm <= COMPARE;
         end
-        INSERT      : begin
-          // Insert the new value
-          sorted_y[insert_point] <= working_set[total_sorted];
-          // insert the new position
-          positions_y[insert_point] <= total_sorted;
-          // Everything Above this position gets shifted up
-          for(int i=(insert_point); i<INPUTVALS; i++) begin
-            sorted_y[(i+1)] <= sorted_y[i];
-            positions_y[(i+1)] <= positions_y[i];
-          end
-          // Clear the Compare Positions pointer
-          compare_position <= 0;
-          // All Sorted
-          if(total_sorted == INPUTVALS) begin
-            // Flag the Sorted Done bit
-            sortdone_y <= 1'b1;
-            // Return to IDLE
-            sort_fsm <= IDLE;
-          end
-          else begin
-            // Increment the Total Sorted Counter
-            total_sorted <= total_sorted + 1;
-            // Return to COMPARE
+        COMPARE   : begin
+          //-----------------------------------------------
+          // If the current value has shifted to position 0
+          //-----------------------------------------------
+          if(current_position == 0) begin
+            // Increment the current sorted value pointer to the next element
+            current_sort <= current_sort + 1;
+            // Change the current position pointer for the next sorted value
+            // to the current element as it hasn't been moved yet
+            current_position <= current_sort + 1;
+            // Stay in this state as comparison needs to occur first
             sort_fsm <= COMPARE;
+            // If we've sorted all the elements
+            if(current_sort == (INPUTVALS-1)) begin
+              // Flag the sorting is done
+              sortdone_y <= 1'b1;
+              // Copy the array to the output registers
+              sorted_y <= working_set;
+              sort_fsm <= IDLE;
+            end
+          end
+          //----------------------------------------------------------
+          // If the current value is in the correct position
+          //----------------------------------------------------------
+          else if(working_set[current_position] >= working_set[current_position - 1]) begin
+            // Increment the current sorted value pointer to the next element
+            current_sort <= current_sort + 1;
+            // Change the current position pointer for the next sorted value
+            // to the current element as it hasn't been moved yet
+            current_position <= current_sort + 1;
+            // Stay in this state as comparison needs to occur first
+            sort_fsm <= COMPARE;
+            // If we've sorted all the elements
+            if(current_sort == (INPUTVALS-1)) begin
+              // Flag the sorting is done
+              sortdone_y <= 1'b1;
+              // Copy the array to the output registers
+              sorted_y <= working_set;
+              sort_fsm <= IDLE;
+            end
+          end
+          // If the current value is not in the correct position, shift
+          else begin
+            sort_fsm <= SHIFT;
           end
         end
         // Catch if the FSM goes into an unknown state
         default     : begin
           working_set <= 0;
           sortdone_y <= 0;
-          positions_y <= 0;
+          // Generate the Position Array
+          for(int i=0; i<INPUTVALS; i++) begin
+            positions_y[i] <= i;
+          end
           error_y <= 1;
           sort_fsm <= IDLE;
         end

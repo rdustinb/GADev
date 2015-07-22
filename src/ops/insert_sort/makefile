@@ -6,6 +6,7 @@ test: simlibs
 	    tb.sv
 	vsim                                            \
 	    -c                                          \
+	    -sv_seed random 														\
 	    -t 1ps                                      \
 	    -l wlf/tb.log                   						\
 	    -wlf wlf/tb.wlf                      				\

@@ -1,8 +1,11 @@
 `timescale 100 ns / 10 ns
 
+// DEBUG
+localparam DEBUG = 0;
+
 // Parameters
-localparam VALCOUNT = 16;
-localparam VALBIT = 6;
+localparam VALCOUNT = 64;
+localparam VALBIT = 16;
 localparam RSTPOL = 0;
 
 // Simulation Module
@@ -20,6 +23,8 @@ module tb;
 
   logic [63:0] clock_counter;
   logic counting;
+
+  logic order_error;
 
   // Clock and Reset
   initial begin
@@ -74,6 +79,7 @@ module tb;
   // SIM
   initial begin
     sortstart <= 0;
+    order_error = 0;
     #1us;
 
     // Print the current time
@@ -85,11 +91,6 @@ module tb;
       // Assign the random value to the array of values
       values[i] = VALBIT'(single_value[i]);
     end
-    // Display the values
-    $display("Original values are:::");
-    for(int i=0; i<VALCOUNT; i++) begin
-      $display("%d",values[i]);
-    end
 
     @(posedge clk) sortstart <= 1;
     @(posedge clk) sortstart <= 0;
@@ -97,15 +98,30 @@ module tb;
     // Wait for sorting to be complete
     @(posedge sortdone) #1us;
 
-    // Print out the sorted values
-    $display("Sorted values are:::");
+    // Verify they are in order
     for(int i=0; i<VALCOUNT; i++) begin
-      $display("%d",sorted_values[i]);
+      if(!(sorted_values[i] <= (sorted_values[i+1]))) begin
+        order_error = 1;
+      end
     end
-    // Print out the sorted positions
-    $display("Sorted positions are:::");
-    for(int i=0; i<VALCOUNT; i++) begin
-      $display("%d",sorted_positions[i]);
+
+    if(DEBUG > 0) begin
+      // Display the values
+      $display("Original values are:::");
+      for(int i=0; i<VALCOUNT; i++) begin
+        $display("%d",values[i]);
+      end
+
+      // Print out the sorted values
+      $display("Sorted values are:::");
+      for(int i=0; i<VALCOUNT; i++) begin
+        $display("%d",sorted_values[i]);
+      end
+      // Print out the sorted positions
+      $display("Sorted positions are:::");
+      for(int i=0; i<VALCOUNT; i++) begin
+        $display("%d",sorted_positions[i]);
+      end
     end
 
     $finish;
@@ -126,6 +142,12 @@ module tb;
     end
     else begin
       $display("Results >>>> Sorting took %d Clock Cycles", clock_counter);
+      if(order_error) begin
+        $display("Results >>>> Sorting operation --- FAILED ---");
+      end
+      else begin
+        $display("Results >>>> Sorting operation --- PASSED ---");
+      end
       $display("Results >>>> Simulation completed normally.");
     end
   end

@@ -1,3 +1,19 @@
+/**********************************************************
+  Insertion Sort Algorithm
+
+  Quadratic Running Time
+
+  https://en.m.wikipedia.org/wiki/Insertion_sort
+
+  This is a fairly simple algorithm that utilizes small
+  amounts of logic. Maximum time of sorting is n^2 where
+  n is the number of elements to be sorted. Typically,
+  for large lists of numbers, n^2 is a very high estimate
+  of sorting time (in clock cycles). While for very small
+  lists, n^2 is the typical amount of time that sorting
+  requires.
+**********************************************************/
+
 module insert_sort #(
     parameter RSTPOL                                    = 0,
     parameter INPUTVALS                                 = 16,

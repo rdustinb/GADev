@@ -91,11 +91,11 @@ module mask_data #(
     // This is a needed step as the number of keep bits
     // does not necessarily equal the number of available
     // bytes of storage.
+    keepbitsmask <= 'h0;
     for(int i=0; i<BUSBYTEWIDTH; i++) begin
       // THIS CREATES A LATCH
       if(counts_of_vld_set_r[i] == bytesavailin_rr) begin
         //keepbitcountactive <= ($clog2(BYTESAVAIL))'(i);
-        keepbitsmask <= 'h0;
         for(int j=0; j<counts_of_vld_set_r[i]; j++) begin
           keepbitsmask[j] <= 1'b1;
         end

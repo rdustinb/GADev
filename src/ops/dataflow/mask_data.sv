@@ -5,7 +5,7 @@
 
 module mask_data #(
     parameter BUSBYTEWIDTH              = 16,
-    parameter BYTESAVAIL                = 16
+    parameter BYTESAVAIL                = 32
   )(
     input                               clk,
     input                               reset,
@@ -25,17 +25,32 @@ module mask_data #(
   logic                             businvld_rr;
   logic [(BUSBYTEWIDTH-1):0]        businkeep_rr;
   logic [(BUSBYTEWIDTH*8-1):0]      busin_rr;
-  logic [($clog2(BYTESAVAIL)-1):0]  counts_of_vld_set;
-  logic [($clog2(BYTESAVAIL)-1):0]  counts_of_vld_set_r;
-  logic [($clog2(BYTESAVAIL)-1):0]  keepbitcountactive;
-  logic [($clog2(BYTESAVAIL)-1):0]  keepbitcountactive_r;
+  logic [($clog2(BYTESAVAIL)-1):0]  bytesavailin_rr;
+  logic                             businvld_rrr;
+  logic [(BUSBYTEWIDTH-1):0]        businkeep_rrr;
+  logic [(BUSBYTEWIDTH*8-1):0]      busin_rrr;
+  logic [($clog2(BYTESAVAIL)-1):0]  bytesavailin_rrr;
+  logic [(BUSBYTEWIDTH-1):0][($clog2(BUSBYTEWIDTH)-1):0]        counts_of_vld_set;
+  logic [(BUSBYTEWIDTH-1):0][($clog2(BUSBYTEWIDTH)-1):0]        counts_of_vld_set_r;
+  //logic [($clog2(BYTESAVAIL)-1):0]  keepbitcountactive;
+  //logic [($clog2(BYTESAVAIL)-1):0]  keepbitcountactive_r;
+  logic [(BUSBYTEWIDTH-1):0]        keepbitsmask;
+  logic [(BUSBYTEWIDTH-1):0]        keepbitsmask_r;
+
+  logic                             busoutvld_y;
+  logic [(BUSBYTEWIDTH-1):0]        busoutkeep_y;
+  logic [(BUSBYTEWIDTH*8-1):0]      busout_y;
+
+  logic                             busoutvld_r;
+  logic [(BUSBYTEWIDTH-1):0]        busoutkeep_r;
+  logic [(BUSBYTEWIDTH*8-1):0]      busout_r;
 
   // Input Pipeline
   always@(posedge clk) begin : Input_Pipeline
     businvld_r            <= businvld;
     businkeep_r           <= businkeep;
     busin_r               <= busin;
-    bytesavailin_r        <= byteavailin;
+    bytesavailin_r        <= bytesavailin;
   end
 
   // Combinatorial Cloud 1
@@ -64,7 +79,7 @@ module mask_data #(
     businkeep_rr          <= businkeep_r;
     businvld_rr           <= businvld_r;
     busin_rr              <= busin_r;
-    bytesavailin_rr       <= byteavailin_r;
+    bytesavailin_rr       <= bytesavailin_r;
     // Register the count results
     counts_of_vld_set_r   <= counts_of_vld_set;
   end
@@ -77,8 +92,13 @@ module mask_data #(
     // does not necessarily equal the number of available
     // bytes of storage.
     for(int i=0; i<BUSBYTEWIDTH; i++) begin
+      // THIS CREATES A LATCH
       if(counts_of_vld_set_r[i] == bytesavailin_rr) begin
-        keepbitcountactive <= '(i);
+        //keepbitcountactive <= ($clog2(BYTESAVAIL))'(i);
+        keepbitsmask <= 'h0;
+        for(int j=0; j<counts_of_vld_set_r[i]; j++) begin
+          keepbitsmask[j] <= 1'b1;
+        end
       end
     end
   end
@@ -89,9 +109,10 @@ module mask_data #(
     businkeep_rrr         <= businkeep_rr;
     businvld_rrr          <= businvld_rr;
     busin_rrr             <= busin_rr;
-    bytesavailin_rrr      <= byteavailin_rr;
+    bytesavailin_rrr      <= bytesavailin_rr;
     // Register the active-inactive boundary
-    keepbitcountactive_r  <= keepbitcountactive;
+    //keepbitcountactive_r  <= keepbitcountactive;
+    keepbitsmask_r        <= keepbitsmask;
   end
 
   // Combinatorial Cloud 3
@@ -106,13 +127,14 @@ module mask_data #(
     if(bytesavailin_rrr == 'h0) begin
       busoutkeep_y <= 'h0;
     end
-    else if(keepbitcountactive_r == 0) begin
+    //else if(keepbitcountactive_r == 0) begin
+    else if(keepbitsmask_r == 0) begin
       busoutkeep_y <= businkeep_rrr;
     end
     else begin
-      busoutkeep_y <= 'h0;
-      busoutkeep_y[0+:keepbitcountactive_r] <= 
-        businkeep_rrr[0+:keepbitcountactive_r];
+      //busoutkeep_y <= 'h0;
+      //busoutkeep_y[0+:keepbitcountactive_r] <= businkeep_rrr[0+:keepbitcountactive_r];
+      busoutkeep_y <= businkeep_rrr & keepbitsmask_r;
     end
 
     // Tie up the other output busses
@@ -126,5 +148,9 @@ module mask_data #(
     busoutkeep_r  <= busoutkeep_y;
     busout_r      <= busout_y;
   end
+
+  assign busoutvld = busoutvld_r;
+  assign busoutkeep = busoutkeep_r;
+  assign busout = busout_r;
 
 endmodule

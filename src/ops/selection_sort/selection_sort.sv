@@ -20,8 +20,8 @@ numbers list.
 https://en.wikipedia.org/wiki/Selection_sort
 
 ---- Analytics ----
-> Low Memory Writes
-> Slow Execution Speed
+> Medium Memory Writes (n)
+> Slow Execution Speed (n^2)
 *****************************************************************************/
 
 module selection_sort #(

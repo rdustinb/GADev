@@ -1,3 +1,6 @@
+// Register Utilization:  670
+// LUT Utilization:       482
+
 // The core of the function is this, get the smallest
 // number of valid bits that are needed to have the
 // number of SET valid bits equal to the number of

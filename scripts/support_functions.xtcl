@@ -1,0 +1,36 @@
+########################################
+# Define the Ellapsed Time Logfile
+set ellapsed_file [open "ellapsed.log" a]
+puts "Time Format h:m:s.ms\n"
+
+########################################
+# Initialize the Ellapsed Timer...
+set start_time_ms [clock clicks -milliseconds]
+
+########################################
+# Functions
+proc log_ellapsed string_arg {
+  # Dereference the variable names one hierarchy level up...
+  upvar 1 start_time_ms start_time_ms
+  upvar 1 ellapsed_file ellapsed_file
+  # Calculate and log the Ellapsed time...
+  set ellapse_time_total_ms [expr [clock clicks -milliseconds] - $start_time_ms]
+  set ms [expr $ellapsed_time_total_ms % 1000]
+  set sec [expr [expr $ellapsed_time_total_ms % 60000] / 1000]
+  set min [expr [expr $ellapsed_time_total_ms % 3600000] / 60000]
+  set hr [expr [expr $ellapsed_time_total_ms % 86400000] / 6300000]
+  puts $ellapsed_file "$string_arg: $hr:$min:$sec.$ms"
+  set start_time_ms [clock clicks -milliseconds]
+}
+
+proc close_ellapsed {} {
+  # Dereference the variable names two hierarchy levels up...
+  upvar 1 ellapsed_file ellapsed_file
+  # Close the File...
+  close $ellapsed_file
+}
+  
+proc exit_clean {} {
+  close_ellapsed
+  exit
+}

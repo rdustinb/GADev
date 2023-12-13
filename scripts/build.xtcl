@@ -29,13 +29,19 @@ set outputPart xc7vx485tffg1761-2
 set_part $outputPart
 
 ################################################################################
+# Pull in the Support Functions
+################################################################################
+
+source support_functions.xtcl
+
+################################################################################
 # Setup
 ################################################################################
 
 foreach thisFile $includesDir {
   if { [file exists $includesDir] == 0 } {
     puts "build.xtcl : The includes directory $thisFile doesn't exist..."
-    exit
+    exit_clean
   }
 }
 
@@ -56,8 +62,8 @@ read_xdc ./constraints/timing.xdc
 read_xdc ./constraints/fp.xdc
 read_xdc ./constraints/project.xdc
 
-# Increment the Build Step Number
-set buildStepNumber [expr $buildStepNumber + 1]
+# Log the Ellapsed Time...
+log_ellapsed "Setup time"
 
 ################################################################################
 # Synthesize the Design
@@ -82,7 +88,7 @@ if {$synth_return_code != 0} {
   puts "Synthesis return results are: $synth_return_results"
   puts "\n\n"
   # Don't continue if the Synthesis failed...
-  exit
+  exit_clean
 }
 
 check_timing -verbose   -file $resultsDir/${buildStepNumber}_synth_timing_check.rpt
@@ -91,6 +97,9 @@ report_power            -file $resultsDir/${buildStepNumber}_synth_power_utiliza
 report_high_fanout_nets -fanout_greater_than 200 \
                         -max_nets 50 \
                         -file $resultsDir/${buildStepNumber}_synth_high_fanout_nets.rpt
+
+# Log the Ellapsed Time...
+log_ellapsed "Synthesis time"
 
 # Increment the Build Step Number
 set buildStepNumber [expr $buildStepNumber + 1]
@@ -115,8 +124,11 @@ if {$opt_return_code != 0} {
   puts "Optimization return results are: $opt_return_results"
   puts "\n\n"
   # Don't continue if the Optimization failed...
-  exit
+  exit_clean
 }
+
+# Log the Ellapsed Time...
+log_ellapsed "Optimize time"
 
 # Increment the Build Step Number
 set buildStepNumber [expr $buildStepNumber + 1]
@@ -140,8 +152,11 @@ if {$placer_return_code != 0} {
   puts "\n\n"
   report_drc -file $resultsDir/${buildStepNumber}_placer_drc_errors.rpt
   # Don't continue if the placer failed...
-  exit
+  exit_clean
 }
+
+# Log the Ellapsed Time...
+log_ellapsed "Place time"
 
 # Increment the Build Step Number
 set buildStepNumber [expr $buildStepNumber + 1]
@@ -168,8 +183,11 @@ if {[get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]] < 0} {
     puts "Physical Optimization return results are: $phy_opt_return_results"
     puts "\n\n"
     # Don't continue if the Physical Optimizer failed...
-    exit
+    exit_clean
   }
+
+  # Log the Ellapsed Time...
+  log_ellapsed "Physical Optimization time"
 
   # Increment the Build Step Number
   set buildStepNumber [expr $buildStepNumber + 1]
@@ -194,8 +212,11 @@ if {$router_return_code != 0} {
   puts "\n\n"
   report_drc            -file $resultsDir/${buildStepNumber}_router_drc_errors.rpt
   # Don't continue if the router failed...
-  exit
+  exit_clean
 }
+
+# Log the Ellapsed Time...
+log_ellapsed "Route time"
 
 set buildStepNumber [expr $buildStepNumber + 1]
 

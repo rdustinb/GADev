@@ -1,3 +1,5 @@
+################################################################################
+# For building stuff in Vivado
 FE=MyName
 FI=8
 FO=MoreStuff
@@ -10,3 +12,69 @@ buildip:
 build:
 	@echo -e "Building the design!"
 	@vivado -mode batch -source build.xtcl -tclargs $(FE) $(FI) $(FO) $(FUM)
+
+################################################################################
+# For simulating stuff with QuestaSim
+
+# If several libraries are needed to be defined, this flow expects each library's set of files to be in a .vf file
+# list...
+LIBS=one two three four
+LIBS_LIST=`echo ${LIBS} | sed -e "s/ / -L /g" | sed -e "s/^/-L /"`
+
+# This variable is only indirectly used when lib_setup is called based on what is defined in the LIBS list...
+THISLIB=
+
+# This needs to be filled out to setup the environment. Where are the filelists stored?
+FILELIST_FOLDER=~/myfilelists
+
+# Any defines needed globally
+DEFINES=+define+SIMULATION+EMULATION
+
+# Any include directories for Verilog `include statements
+INCDIRS=+incdir+~/myincs
+
+lib_setup: clean
+	@echo "Setting up the libraries..."
+	@mkdir logs wlfs
+	@$(foreach lib,$(LIBS), \
+		mkdir -p libs/$(lib); \
+		vlib libs/$(lib); \
+		vmap $(lib) libs/$(lib); \
+		make lib_compile THISLIB=$(lib); \
+		)
+
+# -preserve
+#  This keeps any VHDL port or parameter names at the mixed-language boundary, as-written. This means any Verilog module
+#  instantiating a VHDL entity will utilize whatever case the port or parameter is written in, even a form of cAmElCaSe.
+#  This does not affect the compilation of the VHDL itself, as it is still compiled as case-insensitive.
+lib_compile:
+	@echo "Compiling VHDL library ${THISLIB}..."
+	@vcom -64 \
+		-2008 \
+		-vhams \
+		-mixedsvvh \
+		-preserve \
+		-work ${THISLIB} \
+		-l logs/vcom.LIB_${THISLIB}.log \
+		-f ${FILELIST_FOLDER}/${THISLIB}.vf
+
+# -mfcu
+#  This flag will utilize a global definitions file as a means to define multiple `define macros throughout the entire
+#  hierarchy. Whether or not a respective Verilog file properly `includes said global define file. The global define
+#  file must be listed first in the filelist.
+dut_compile:
+	@vlog -64 \
+		-sv \
+		-floatparameters \
+		-work work \
+		-mfcu \
+		${DEFINES} \
+		${LIBS_LIST} \
+		-undef SYNTHESIS \
+		-timescale=1ns/1ps \
+		-l logs.vlog.dut_compile.log \
+		${INCDIRS} \
+		-f ${FILELIST_FOLDER}/top.vf
+
+clean:
+	@rm -fr libs logs wlfs modelsim.ini

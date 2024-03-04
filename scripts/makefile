@@ -1,5 +1,20 @@
+help:
+	@echo -e ""
+	@echo -e "buildip     - builds the IP .xci files, generating simulation netlists and .dcp files."
+	@echo -e "build       - runs the Vivado build flow."
+	@echo -e "Build Options:"
+	@echo -e "  LASTBUILDSTEP - branches the Vivado build, completing the build flow early without running everything."
+	@echo -e "                  SYN, OPT, PLACE, PHYOPT, ROUTE, ALL"
+	@echo -e ""
+	@echo -e "lib_setup   - sets up the Libraries for simulation."
+	@echo -e "lib_compile - compiles the Libraries for simulation."
+	@echo -e "dut_compile - compiles the DUT source RTL for simulation."
+	@echo -e ""
+	@echo -e "clean       - whipes out all build products."
+
 ################################################################################
 # For building stuff in Vivado
+LASTBUILDSTEP=ALL
 FE=MyName
 FI=8
 FO=MoreStuff
@@ -11,7 +26,7 @@ buildip:
 
 build:
 	@echo -e "Building the design!"
-	@vivado -mode batch -source build.xtcl -tclargs $(FE) $(FI) $(FO) $(FUM)
+	@vivado -mode batch -source build.xtcl -tclargs $(LASTBUILDSTEP) $(FE) $(FI) $(FO) $(FUM)
 
 ################################################################################
 # For simulating stuff with QuestaSim

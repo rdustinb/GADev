@@ -1,11 +1,17 @@
-# TODO Add ellapsed time calculation procedure.
 # TODO Add target device -> target PROM loopup.
 
+# This determines how far in the build flow to run. This allows the makefile to only run through certain steps in this
+# build script without having to change the script.
+#
+# Argument should be one of the following:
+# SYN, OPT, PLACE, PHYOPT, ROUTE, ALL
+set lastBuildStep [lindex $argv 0]
+
 # Capture the TCL Arguments from the Makefile
-set FE    [lindex $argv 0]
-set FI    [lindex $argv 1]
-set FO    [lindex $argv 2]
-set FUM   [lindex $argv 3]
+set FE    [lindex $argv 2]
+set FI    [lindex $argv 3]
+set FO    [lindex $argv 4]
+set FUM   [lindex $argv 5]
 
 puts "build.tcl : FE  is $FE"
 puts "build.tcl : FI  is $FI"
@@ -104,6 +110,11 @@ log_ellapsed "Synthesis time"
 # Increment the Build Step Number
 set buildStepNumber [expr $buildStepNumber + 1]
 
+# Short Run
+if { $lastBuildStep == "SYN" } {
+  exit_clean
+}
+
 ################################################################################
 # Optimize the Design
 ################################################################################
@@ -133,6 +144,11 @@ log_ellapsed "Optimize time"
 # Increment the Build Step Number
 set buildStepNumber [expr $buildStepNumber + 1]
 
+# Short Run
+if { $lastBuildStep == "OPT" } {
+  exit_clean
+}
+
 ################################################################################
 # Place the Design
 ################################################################################
@@ -160,6 +176,11 @@ log_ellapsed "Place time"
 
 # Increment the Build Step Number
 set buildStepNumber [expr $buildStepNumber + 1]
+
+# Short Run
+if { $lastBuildStep == "PLACE" } {
+  exit_clean
+}
 
 ################################################################################
 # Physically Optimize the Design, OPTIONAL
@@ -193,6 +214,11 @@ if {[get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]] < 0} {
   set buildStepNumber [expr $buildStepNumber + 1]
 }
 
+# Short Run
+if { $lastBuildStep == "PHYOPT" } {
+  exit_clean
+}
+
 ################################################################################
 # Route the Design
 ################################################################################
@@ -219,6 +245,11 @@ if {$router_return_code != 0} {
 log_ellapsed "Route time"
 
 set buildStepNumber [expr $buildStepNumber + 1]
+
+# Short Run
+if { $lastBuildStep == "ROUTE" } {
+  exit_clean
+}
 
 ################################################################################
 # Log the Results of the Design

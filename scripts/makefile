@@ -20,6 +20,12 @@ FI=8
 FO=MoreStuff
 FUM=20231004
 
+help:
+	@echo -e "buildip - builds the IP .XCI files in the design, generating simulation netlists and .DCP files."
+	@echo -e "build   - builds the design. Arguments to use with this flow:"
+	@echo -e "  LASTBUILDSTEP - determines what is the final step of the build flow, allowing for short runs."
+	@echo -e "                  SYN, OPT, PLACE, PHYOPT, ROUTE, or ALL"
+
 buildip:
 	@echo -e "Building the Xilinx IP!"
 	@vivado -mode batch -source buildip.xtcl

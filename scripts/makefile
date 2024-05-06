@@ -93,9 +93,51 @@ dut_compile:
 		${LIBS_LIST} \
 		-undef SYNTHESIS \
 		-timescale=1ns/1ps \
-		-l logs.vlog.dut_compile.log \
+		-l logs/vlog.dut_compile.log \
 		${INCDIRS} \
 		-f ${FILELIST_FOLDER}/top.vf
+
+tb_compile:
+	@cp tests/${TESTNAME}.svh thistest.svh
+	@vlog -64 \
+		-sv \
+		-floatparameters \
+		-work work \
+		${DEFINES} \
+		-l logs/vlog.tb_compile.log \
+		+indcir+${INCDIRS} \
+		tb.sv
+
+# +acc is the old way to log and debug signals
+#  Old QuestaSim visual and signal logging
+# -access=rw+/.
+# -debug
+#  Always good to have when using Visualizer
+opt_vsim: tb_compile
+	@vopt -64 \
+		-work work \
+		${DEFINES} \
+		${LIBS_LIST} \
+		-L dut \
+		-logs/opt_vsim.log \
+		+indcir+${INCDIRS} \
+		tb \
+		-o tb_opt
+
+# -sva
+#  This enables SystemVerilog concurrent assertions
+# -sv_seed
+#  Specifies a number for the seed, or random for the simulator to use a random number
+sim_vsim:
+	@vsim -64 \
+		-work work \
+		-c \
+		-sva \
+		-sv_seed random \
+		-l logs/sim_vsim.log \
+		-wlf wlfs/sim.wlf \
+		tb_opt \
+		-do " log -R /* ; run -all ; quit -f "
 
 clean:
 	@rm -fr libs logs wlfs modelsim.ini

@@ -1,0 +1,11 @@
+
+# Step 1) Get the failing paths
+set failingPathList [get_timing_paths -hold -nworst 100]
+
+# Read in corrected cell endpoints, if the file exists
+set storeFile "storefile.log"
+if { [file exists ${storeFile}] == 1 }{
+  set fileHandle [open ${storeFile} "r"]
+  # Read in contents...
+  close ${fileHandle}
+}

@@ -4,10 +4,11 @@ module tb;
 
   `include "support.svh"
 
+  parameter int MEMDEPTH = 65536;
   parameter logic[31:0] MEMINITWORD = 32'hFFFFFFFF;
 
   // Define the dynamic array
-  logic [31:0] wholeMem [0:65535];
+  logic [31:0] wholeMem [0:(MEMDEPTH-1)];
 
   // Built in tasks
   task readMemFile;
@@ -16,21 +17,36 @@ module tb;
   endtask
 
   task automatic printMemData;
-
-    int offset = 'h0;
     int length = 8;
 
-    // Print at a boundary
-    $display("@%x", offset);
+    // Offset 0x0000
+    int offset = 'h0;
+
+    $display("\n@%x", offset);
     for(int idx=offset; idx<(offset+(length/2)); idx++) begin
       $display("index %x: %x", idx, wholeMem[idx]);
     end
 
+    // Offset 0x1000
     offset = 'h1000;
-    length = 8;
 
-    // Print at a boundary
-    $display("@%x", offset);
+    $display("\n@%x", offset);
+    for(int idx=(offset-(length/2)); idx<(offset+(length/2)); idx++) begin
+      $display("index %x: %x", idx, wholeMem[idx]);
+    end
+
+    // Offset 0x2000
+    offset = 'h2000;
+
+    $display("\n@%x", offset);
+    for(int idx=(offset-(length/2)); idx<(offset+(length/2)); idx++) begin
+      $display("index %x: %x", idx, wholeMem[idx]);
+    end
+
+    // Offset 0x8000
+    offset = 'h8000;
+
+    $display("\n@%x", offset);
     for(int idx=(offset-(length/2)); idx<(offset+(length/2)); idx++) begin
       $display("index %x: %x", idx, wholeMem[idx]);
     end

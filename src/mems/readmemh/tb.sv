@@ -15,7 +15,7 @@ module tb;
     $readmemh("example.mem", wholeMem);
   endtask
 
-  task printMemData;
+  task automatic printMemData;
 
     int offset = 'h0;
     int length = 8;
@@ -50,7 +50,6 @@ module tb;
         #1ns;
       end
     join
-    $finish;
     finishSim();
   end
 

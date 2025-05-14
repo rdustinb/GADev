@@ -1,9 +1,11 @@
 OUTDIR=out
 SIM_EXECUTABLE=runme
 
+all: sim_icarus sim_verilator
+
 ##################################
 # Build with icarus-verilog
-build_icarus: clean_icarus
+build_icarus:
 	iverilog \
 		-g2005-sv \
 		-I includes \
@@ -19,7 +21,7 @@ clean_icarus:
 
 ##################################
 # Build with verilator
-build_verilator: clean_verilator
+build_verilator:
 	verilator \
 		+1800-2012ext+sv \
 		-j 8 \

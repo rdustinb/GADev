@@ -27,8 +27,24 @@ module tb;
       $display("index %x: %x", idx, wholeMem[idx]);
     end
 
+    // Offset 0x0400
+    offset = 'h400;
+
+    $display("\n@%x", offset);
+    for(int idx=(offset-(length/2)); idx<(offset+(length/2)); idx++) begin
+      $display("index %x: %x", idx, wholeMem[idx]);
+    end
+
     // Offset 0x1000
     offset = 'h1000;
+
+    $display("\n@%x", offset);
+    for(int idx=(offset-(length/2)); idx<(offset+(length/2)); idx++) begin
+      $display("index %x: %x", idx, wholeMem[idx]);
+    end
+
+    // Offset 0x1100
+    offset = 'h1100;
 
     $display("\n@%x", offset);
     for(int idx=(offset-(length/2)); idx<(offset+(length/2)); idx++) begin

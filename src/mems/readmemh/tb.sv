@@ -76,7 +76,7 @@ module tb;
       // Add different forks here...
       begin : simFork0
         #1ns;
-        initMem(MEMINITWORD);
+        //initMem(MEMINITWORD);
         readMemFile();
         printMemData();
         #1ns;

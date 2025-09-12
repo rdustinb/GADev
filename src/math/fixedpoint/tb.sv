@@ -65,17 +65,6 @@ module tb;
   );
 
   // Tasks
-  // Fixed Point
-  // The separation between the whole and fractional parts of the number determines the range and/or precision of the
-  // final number.
-  //
-  // 32 - sign
-  //
-  // 31:20 - whole (+/-2**12)
-  // 19:0 - fraction (1/(2**20) precision)
-  //
-  // 31:16 - whole (+/-2**16)
-  // 15:0 - fraction (1/(2**16) precision)
 
   // Floating Point
   // See IEEE754
@@ -105,20 +94,34 @@ module tb;
     @(negedge clock);
     calculate_en = 1'b1;
     // h0001.h0001
-    valueOne[fractionWidth+:wholeWidth] = 'h1;
-    valueOne[0+:fractionWidth] = 'h1;
+    valueOne[fractionWidth+:wholeWidth] = 'd3;
+    valueOne[0+:fractionWidth] = 'd1137;
     // h0001.h0001
-    valueTwo[fractionWidth+:wholeWidth] = 'h1;
-    valueTwo[0+:fractionWidth] = 'h0151;
+    valueTwo[fractionWidth+:wholeWidth] = 'd16;
+    valueTwo[0+:fractionWidth] = 'd4173;
     @(negedge clock);
     calculate_en = 1'b0;
 
-    $display("0x%08h + 0x%08h = 0x%08h", valueOne, valueTwo, addend);
-    $display("0x%08h - 0x%08h = 0x%08h", valueOne, valueTwo, difference);
+    $display("");
+    //$display("0x%08h + 0x%08h = 0x%08h", valueOne, valueTwo, addend);
+    //$display("0x%08h - 0x%08h = 0x%08h", valueOne, valueTwo, difference);
     $display("0x%08h * 0x%08h = 0x%08h", valueOne, valueTwo, product);
+    $display("%d.%05d * %d.%05d = %d.%05d", 
+      valueOne[fractionWidth+:wholeWidth], 
+      valueOne[0+:fractionWidth], 
+      valueTwo[fractionWidth+:wholeWidth], 
+      valueTwo[0+:fractionWidth],
+      product[fractionWidth+:wholeWidth], 
+      product[0+:fractionWidth]
+    );
 
     #20ns;
 
+    $display("");
+    $display("---------------------------------");
+    $display("           SIM COMPLETE!");
+    $display("---------------------------------");
+    $display("");
     $finish;
   end
 

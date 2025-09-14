@@ -1,11 +1,22 @@
 OUTDIR=out
 SIM_EXECUTABLE=runme
+TEST=tasks
 
 all: sim_icarus sim_verilator
 
+clean: preclean clean_icarus clean_verilator
+
+##################################
+# Common stuff...
+preop:
+	cp tests/${TEST}.svh test.svh
+
+preclean:
+	rm -f test.svh
+
 ##################################
 # Build with icarus-verilog
-build_icarus:
+build_icarus: preop
 	iverilog \
 		-g2005-sv \
 		-I includes \

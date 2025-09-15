@@ -13,8 +13,10 @@ task automatic real2hex(
   logic[3:0] thisFractionTransformHex;
   int thisHexFractionDigit = 0;
 
+  $display("\nreal2hex()");
+
   // Debug (To answer the question: am I stupid or not?)
-  $display("Original float: %.04f\nWhole number: %d\nFractional number: %.04f",
+  $display("Original float: %.016f\nWhole number: %d\nFractional number: %.016f",
     originalFloat,
     originalWhole,
     originalFraction
@@ -25,11 +27,11 @@ task automatic real2hex(
 
   // Now process the fractional part using the following algorithm:
   while(originalFraction != 0 && thisHexFractionDigit < (fractionWidth / 4)) begin
-    $display("\nLoop %d", thisHexFractionDigit);
-    $display("Partial fraction value is: %.08f", originalFraction);
+    $display("Loop %d", thisHexFractionDigit);
+    $display("Partial fraction value is: %.016f", originalFraction);
     // 1) Multiply by 16
     originalFraction = originalFraction * 16; // In essence, this causes the fraction to "shift-left"
-    $display("Partial fraction upscaled real is: %.08f", originalFraction);
+    $display("Partial fraction upscaled real is: %.016f", originalFraction);
     // 2) Take whole number digit, convert to hex
     // Jenky way to get the whole integer of the number of the original real, since casting by default rounds.
     // What this does is converts the number from the original real, to int (where rounding occurs), then back to real
@@ -54,16 +56,40 @@ task automatic real2hex(
 endtask
 
 task automatic hex2real(
-  input[31:0] thisHexFraction,
-  output int  thisDecFraction
+  input[(wholeWidth+fractionWidth)-1:0] thisHex,
+  output real thisFloat
 );
-  // The only purpose of this task is for printing stuff out.
-  // Don't try to store real values in RTL
-  int currentPosition = 10;
 
-  // Loop through each hex digit
-  for(int thisHexDigit = 7; thisHexDigit >= 0; thisHexDigit--) begin
-    // TODO, I'm not sure how to do this yet...
+  logic [(fractionWidth-1):0] originalHexFraction = thisHex[0+:fractionWidth];
+  logic [3:0] thisFractionTransformHex;
+  real thisFractionTransformFloat;
+  real thisFractionFloat;
+
+  $display("\nhex2real()");
+
+  $display("Original hex: %016h", thisHex);
+  $display("Original hex fraction: %016h", originalHexFraction);
+  
+  while(originalHexFraction != 'h0) begin
+    // 1) Shift off the uppermost Hex Fraction digit
+    thisFractionTransformHex = originalHexFraction[0+:4];
+    originalHexFraction = {4'h0,originalHexFraction[4+:(fractionWidth-4)]};
+    // 2) Convert to float
+    thisFractionTransformFloat = real'(thisFractionTransformHex);
+    // 3) Append to the running float fraction, which starts in the whole number digit
+    thisFractionFloat = thisFractionFloat + thisFractionTransformFloat;
+    // 3) Divide by 16
+    thisFractionFloat = thisFractionFloat / 16.0; // In essence, this causes the fraction to "shift-right" out of the whole number digit
+    $display("Running converted float fraction is: %.016f", thisFractionFloat);
+    // 4) Goto step 1 if the original hex value is non-zero, or the shift count is > hex fraction digit count
   end
+
+  // Assign the whole number to the final float
+  thisFloat = real'(thisHex[fractionWidth+:wholeWidth]);
+  // Add the fractional float to the final float
+  thisFloat = thisFloat + thisFractionFloat;
+
+  $display("Final converted float value: %.016f", thisFloat);
+
 endtask
 

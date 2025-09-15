@@ -19,7 +19,8 @@ module tb;
   logic[(wholeWidth+fractionWidth)-1:0] difference;
   logic[(wholeWidth+fractionWidth)-1:0] product;
 
-  logic[(wholeWidth+fractionWidth)-1:0] working;
+  logic[(wholeWidth+fractionWidth)-1:0] workingHex;
+  real workingReal;
 
   // Clocks and Resets
   initial begin

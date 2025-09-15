@@ -90,23 +90,20 @@ module tb;
   `define TESTTASKS
 
   // Simulation
-  initial begin
+  initial begin : SIGNAL_INITIALIZATION
     calculate_en = 1'b0;
     valueOne = 'h0;
     valueTwo = 'h0;
+  end
 
+  initial begin : SIM
     #20ns;
 
     `include "run_test.svh"
 
     #20ns;
 
-    $display("");
-    $display("---------------------------------");
-    $display("           SIM COMPLETE!");
-    $display("---------------------------------");
-    $display("");
-    $finish;
+    finishSim();
   end
 
 endmodule

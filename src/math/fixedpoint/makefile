@@ -9,10 +9,10 @@ clean: preclean clean_icarus clean_verilator
 ##################################
 # Common stuff...
 preop:
-	cp tests/${TEST}.svh test.svh
+	cp tests/${TEST}.svh run_test.svh
 
 preclean:
-	rm -f test.svh
+	rm -f run_test.svh
 
 ##################################
 # Build with icarus-verilog

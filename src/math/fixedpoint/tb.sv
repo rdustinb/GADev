@@ -97,7 +97,7 @@ module tb;
 
     #20ns;
 
-    `include "test.svh"
+    `include "run_test.svh"
 
     #20ns;
 

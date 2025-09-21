@@ -1,21 +1,11 @@
 OUTDIR=out
 SIM_EXECUTABLE=runme
-TEST=tasks
 
-all: sim_verilator
+################
+# DPI only works with Verilator
+sim_verilator: build_verilator
+	$(OUTDIR)/$(SIM_EXECUTABLE)
 
-clean: preclean clean_verilator
-
-##################################
-# Common stuff...
-preop:
-	cp tests/${TEST}.svh run_test.svh
-
-preclean:
-	rm -f run_test.svh c/adder.o
-
-##################################
-# Build with verilator
 build_verilator:
 	verilator \
 		-j 0 \
@@ -26,11 +16,13 @@ build_verilator:
 		-o $(SIM_EXECUTABLE) \
 		-Iincludes \
 		--top tb \
+		cpp/genRand.cpp \
 		cpp/adder.cpp \
 		tb.sv
 
-sim_verilator: build_verilator
-	$(OUTDIR)/$(SIM_EXECUTABLE)
+################
+# Clean
+clean: clean_verilator
 
 clean_verilator:
 	clear ; rm -fr $(OUTDIR)
